@@ -1,253 +1,234 @@
 export function renderSakuraTheme(calendarData) {
   const { weeks } = calendarData;
-  
-  // Find max contributions for scaling
+
   let maxCount = 0;
   for (const week of weeks) {
     for (const day of week.contributionDays) {
-      if (day.contributionCount > maxCount) {
-        maxCount = day.contributionCount;
-      }
+      maxCount = Math.max(maxCount, day.contributionCount);
     }
   }
 
-  const getColor = (count) => {
-    if (count === 0) return '#fff1f5'; // very pale pink (empty)
-    if (maxCount === 0) return '#f9a8d4'; // fallback
+  const palette = ['#ffd9e6', '#f6a8c0', '#ef6f9d', '#d82f68', '#9f194d', '#5a0b2d'];
+
+  const getLevel = (count) => {
+    if (count <= 0 || maxCount === 0) return 0;
     const ratio = count / maxCount;
-    if (ratio <= 0.2) return '#f9a8d4'; // light pink
-    if (ratio <= 0.4) return '#f472b6'; // medium pink
-    if (ratio <= 0.6) return '#ec4899'; // hot pink
-    if (ratio <= 0.8) return '#d946ef'; // magenta
-    return '#831843'; // deep burgundy
+    if (ratio <= 0.2) return 1;
+    if (ratio <= 0.4) return 2;
+    if (ratio <= 0.6) return 3;
+    if (ratio <= 0.8) return 4;
+    return 5;
   };
 
-  const cellWidth = 14;
-  const cellGap = 4;
-  const cellTotal = cellWidth + cellGap;
-  
-  const gridWidth = 53 * cellTotal; 
-  const width = gridWidth + 380; // Extra padding on the left for the tree
-  const height = 7 * cellTotal + 130; 
+  const cell = 17;
+  const gap = 5;
+  const step = cell + gap;
+  const gridX = 405;
+  const gridY = 128;
+  const gridWidth = 53 * step;
+  const width = 1600;
+  const height = 520;
 
-  // Tree Blossoms Generation
-  let treeBlossoms = '';
-  const branchPoints = [
-    // Top sweeping branch
-    [50, 80], [100, 50], [150, 35], [200, 30], [250, 35], [300, 40], [350, 10], [400, 0],
-    // Middle branch
-    [70, 130], [120, 115], [180, 110], [220, 120], [250, 130], [280, 85], [320, 70],
-    // Lower branch
-    [40, 215], [100, 215], [150, 230], [200, 240], [250, 250], [20, 150], [280, 270],
-    // Extra clusters for dense canopy effect on the left
-    [10, 50], [30, 90], [50, 160], [20, 260], [80, 200]
-  ];
-  
-  branchPoints.forEach(pt => {
-    const numClusters = 12 + Math.floor(Math.random() * 10);
-    for (let i = 0; i < numClusters; i++) {
-      const x = pt[0] + (Math.random() - 0.5) * 80;
-      const y = pt[1] + (Math.random() - 0.5) * 80;
-      const scale = 0.4 + Math.random() * 0.8;
-      const rot = Math.random() * 360;
-      treeBlossoms += `<use href="#cluster" x="${x}" y="${y}" transform="rotate(${rot} ${x} ${y}) scale(${scale})" />`;
-    }
-  });
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Floating Petals Generation
-  let floatingPetals = '';
-  for (let i = 0; i < 40; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * (height - 50);
-    const scale = 0.3 + Math.random() * 0.7;
-    const dur = 10 + Math.random() * 15;
-    const delay = -(Math.random() * 20); // start off-sync immediately
-    
-    floatingPetals += `
-      <g>
-        <animateTransform attributeName="transform" type="translate" from="${x},${y}" to="${x - 200},${y + 300}" dur="${dur}s" begin="${delay}s" repeatCount="indefinite" />
-        <g transform="scale(${scale})">
-          <use href="#petal" fill="#f472b6" opacity="0.6">
-            <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="${dur/2}s" repeatCount="indefinite" />
-          </use>
-        </g>
-      </g>
-    `;
+  // Deterministic decorative detail so the artwork stays stable between workflow runs.
+  const pseudo = (n) => {
+    const x = Math.sin(n * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  };
+
+  let blossoms = '';
+  for (let i = 0; i < 115; i++) {
+    const x = 40 + pseudo(i + 11) * 355;
+    const y = 58 + pseudo(i + 37) * 235;
+    const s = 0.45 + pseudo(i + 71) * 0.9;
+    const r = (pseudo(i + 101) * 70) - 35;
+    blossoms += '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + r.toFixed(1) + ') scale(' + s.toFixed(2) + ')">' +
+      '<circle cx="0" cy="-7" r="5" fill="#ff75a8"/>' +
+      '<circle cx="7" cy="0" r="5" fill="#f85693"/>' +
+      '<circle cx="0" cy="7" r="5" fill="#ff9abb"/>' +
+      '<circle cx="-7" cy="0" r="5" fill="#ef4f8d"/>' +
+      '<circle cx="0" cy="0" r="3" fill="#c51d5b"/>' +
+      '</g>';
   }
 
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <defs>
-      <!-- Background Gradient -->
-      <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#ffe4e6" />
-        <stop offset="50%" stop-color="#fff1f2" />
-        <stop offset="100%" stop-color="#fbcfe8" />
-      </linearGradient>
+  let petals = '';
+  for (let i = 0; i < 22; i++) {
+    const x = 200 + pseudo(i + 501) * 1330;
+    const y = 50 + pseudo(i + 551) * 400;
+    const dx = -100 - pseudo(i + 601) * 180;
+    const dy = 160 + pseudo(i + 651) * 180;
+    const dur = 9 + pseudo(i + 701) * 8;
+    const delay = -(pseudo(i + 751) * 14);
+    petals += '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')" opacity="0.75">' +
+      '<path d="M0,0 C9,-12 22,-7 20,5 C18,15 7,19 0,11 C-7,19 -18,15 -20,5 C-22,-7 -9,-12 0,0 Z" fill="#f45d97">' +
+      '<animateTransform attributeName="transform" type="translate" from="0 0" to="' + dx.toFixed(1) + ' ' + dy.toFixed(1) + '" dur="' + dur.toFixed(1) + 's" begin="' + delay.toFixed(1) + 's" repeatCount="indefinite"/>' +
+      '</path></g>';
+  }
 
-      <!-- Animated Inner Border Glow -->
-      <linearGradient id="border-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#f472b6">
-          <animate attributeName="stop-color" values="#f472b6;#ec4899;#f472b6" dur="6s" repeatCount="indefinite" />
-        </stop>
-        <stop offset="50%" stop-color="#fbcfe8" />
-        <stop offset="100%" stop-color="#fda4af">
-          <animate attributeName="stop-color" values="#fda4af;#f472b6;#fda4af" dur="6s" repeatCount="indefinite" />
-        </stop>
-      </linearGradient>
-
-      <!-- Glow Filters -->
-      <filter id="border-glow" x="-10%" y="-10%" width="120%" height="120%">
-        <feGaussianBlur stdDeviation="3" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
-      
-      <!-- Breathing Cell Glow for high activity -->
-      <filter id="cell-glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="2.5" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
-
-      <!-- Atmospheric blur for background elements -->
-      <filter id="atmosphere-blur" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="10" />
-      </filter>
-      
-      <filter id="atmosphere-blur-soft" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="4" />
-      </filter>
-
-      <!-- Sakura Petal & Cluster Templates -->
-      <g id="petal">
-        <path d="M0,0 C6,-6 12,-3 12,6 C12,15 6,18 0,12 C-6,18 -12,15 -12,6 C-12,-3 -6,-6 0,0 Z" />
-      </g>
-      <g id="cluster">
-        <use href="#petal" x="0" y="0" fill="#f472b6" transform="rotate(15)" opacity="0.9"/>
-        <use href="#petal" x="10" y="-6" fill="#ec4899" transform="rotate(75) scale(0.8)" opacity="0.8"/>
-        <use href="#petal" x="-10" y="3" fill="#f9a8d4" transform="rotate(-30) scale(1.2)" opacity="0.9"/>
-        <use href="#petal" x="6" y="10" fill="#fda4af" transform="rotate(120) scale(0.7)" opacity="0.9"/>
-        <circle cx="2" cy="3" r="2.5" fill="#be185d" opacity="0.8" />
-      </g>
-    </defs>
-
-    <!-- Thick black rounded outer border -->
-    <rect x="5" y="5" width="${width - 10}" height="${height - 10}" fill="url(#bg-grad)" stroke="#171717" stroke-width="6" rx="20" />
-    
-    <!-- Thin pink inner border/glow -->
-    <rect x="10" y="10" width="${width - 20}" height="${height - 20}" fill="none" stroke="url(#border-gradient)" stroke-width="2" rx="16" filter="url(#border-glow)" opacity="0.8" />
-    
-    <!-- Distant Mountains / Pink Atmosphere -->
-    <path d="M 0,260 Q 150,200 300,240 T 600,220 T 900,280 L 0,280 Z" fill="#fda4af" opacity="0.4" filter="url(#atmosphere-blur)" />
-    <path d="M 0,220 Q 200,160 400,200 T 800,180 T 1100,270 L 0,270 Z" fill="#e11d48" opacity="0.15" filter="url(#atmosphere-blur)" />
-
-    <!-- Japanese Pagoda Silhouette (Softly blurred in background) -->
-    <g transform="translate(100, 160) scale(0.7)" opacity="0.4" fill="#831843" filter="url(#atmosphere-blur-soft)">
-      <polygon points="50,0 65,25 35,25" />
-      <polygon points="20,25 80,25 75,35 25,35" />
-      <rect x="38" y="35" width="24" height="20" />
-      <polygon points="5,55 95,55 85,70 15,70" />
-      <rect x="32" y="70" width="36" height="25" />
-      <polygon points="-10,95 110,95 100,110 0,110" />
-      <rect x="25" y="110" width="50" height="35" />
-    </g>
-
-    <!-- Sun / Soft glowing orb -->
-    <circle cx="200" cy="120" r="60" fill="#fff1f2" opacity="0.6" filter="url(#atmosphere-blur)" />
-
-    <!-- Main Tree Trunk and Branches -->
-    <g fill="none" stroke="#2c1a1d" stroke-linecap="round">
-      <path d="M -10,320 C 50,260 40,150 80,80" stroke-width="28" />
-      <path d="M 80,80 C 140,30 220,20 330,30" stroke-width="14" />
-      <path d="M 160,35 C 220,10 300,15 380,5" stroke-width="8" />
-      <path d="M 60,150 C 120,110 200,100 280,120" stroke-width="10" />
-      <path d="M 140,120 C 180,85 240,90 310,75" stroke-width="5" />
-      <path d="M 30,220 C 90,210 170,230 280,250" stroke-width="12" />
-    </g>
-
-    <!-- Render Tree Blossoms -->
-    ${treeBlossoms}
-
-    <!-- Render Floating Petals -->
-    ${floatingPetals}
-
-    <!-- Grid Group (Shifted right for composition) -->
-    <g transform="translate(340, 65)">
-  `;
-
-  let gridCells = '';
-
+  let cells = '';
   weeks.forEach((week, xIndex) => {
-    const x = xIndex * cellTotal;
-    
     week.contributionDays.forEach((day) => {
-      const dateObj = new Date(day.date);
       const count = day.contributionCount;
-      const color = getColor(count);
-      const isActivity = count > 0;
-      const y = dateObj.getUTCDay() * cellTotal;
-
-      // Soft breathing glow for high activity
-      let animatePulse = '';
-      let filterAttr = '';
-      if (count > maxCount * 0.6) {
-        const pulseDur = 3 + Math.random() * 2;
-        animatePulse = `<animate attributeName="opacity" values="0.75;1;0.75" dur="${pulseDur}s" repeatCount="indefinite" />`;
-        filterAttr = 'filter="url(#cell-glow)"';
-      }
-
-      gridCells += `<rect x="${x}" y="${y}" width="${cellWidth}" height="${cellWidth}" fill="${color}" rx="3" ry="3" ${filterAttr}>${animatePulse}</rect>`;
+      const date = new Date(day.date + 'T00:00:00Z');
+      const row = date.getUTCDay();
+      const x = gridX + xIndex * step;
+      const y = gridY + row * step;
+      const level = getLevel(count);
+      const glow = level >= 4 ? ' filter="url(#cellGlow)"' : '';
+      cells += '<rect x="' + x + '" y="' + y + '" width="' + cell + '" height="' + cell + '" rx="4" fill="' + palette[level] + '"' + glow + '>' +
+        '<title>' + day.date + ': ' + count + ' contribution' + (count === 1 ? '' : 's') + '</title>' +
+        (level >= 4 ? '<animate attributeName="opacity" values="0.88;1;0.88" dur="2.8s" repeatCount="indefinite"/>' : '') +
+        '</rect>';
     });
   });
 
-  svg += gridCells;
-
-  // Weekday labels
-  const weekdays = ['Mon', 'Wed', 'Fri'];
-  const weekdayOffsets = [1, 3, 5]; 
-  weekdays.forEach((day, i) => {
-    const y = weekdayOffsets[i] * cellTotal + 11;
-    svg += `<text x="-12" y="${y}" fill="#831843" font-size="11" font-weight="600" font-family="sans-serif" text-anchor="end">${day}</text>`;
-  });
-
-  // Month labels
-  const monthLabels = [];
-  let currentMonth = -1;
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  let lastMonthX = -100;
+  let monthLabels = '';
+  let previousMonth = -1;
+  let lastLabelX = -100;
 
   weeks.forEach((week, xIndex) => {
-    const x = xIndex * cellTotal;
-    if (week.contributionDays.length > 0) {
-      const firstDayDate = new Date(week.contributionDays[0].date);
-      const month = firstDayDate.getUTCMonth();
-      
-      if (month !== currentMonth) {
-        if (x - lastMonthX > 30) { 
-          monthLabels.push({ text: monthNames[month], x });
-          lastMonthX = x;
-        }
-        currentMonth = month;
-      }
+    if (!week.contributionDays.length) return;
+    const first = new Date(week.contributionDays[0].date + 'T00:00:00Z');
+    const month = first.getUTCMonth();
+    const x = gridX + xIndex * step;
+    if (month !== previousMonth && x - lastLabelX > 55) {
+      monthLabels += '<text x="' + x + '" y="101" fill="#401323" font-size="18" font-weight="700" font-family="Georgia, serif">' + monthNames[month] + '</text>';
+      lastLabelX = x;
     }
+    previousMonth = month;
   });
 
-  monthLabels.forEach((label) => {
-    svg += `<text x="${label.x}" y="-12" fill="#831843" font-size="11" font-weight="600" font-family="sans-serif">${label.text}</text>`;
-  });
+  const legendX = width - 355;
 
-  svg += `</g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Sakura themed GitHub contribution calendar">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffdfd"/>
+      <stop offset="0.45" stop-color="#ffeef5"/>
+      <stop offset="1" stop-color="#fff8fb"/>
+    </linearGradient>
 
-  // Legend (bottom right placement matching reference)
-  svg += `<g transform="translate(${width - 200}, ${height - 40})">
-    <text x="-12" y="11" fill="#831843" font-size="11" font-weight="600" font-family="sans-serif" text-anchor="end">Less</text>
-    <rect x="0" y="0" width="${cellWidth}" height="${cellWidth}" fill="#fff1f5" rx="3" ry="3" />
-    <rect x="22" y="0" width="${cellWidth}" height="${cellWidth}" fill="#f9a8d4" rx="3" ry="3" />
-    <rect x="44" y="0" width="${cellWidth}" height="${cellWidth}" fill="#f472b6" rx="3" ry="3" filter="url(#cell-glow)"/>
-    <rect x="66" y="0" width="${cellWidth}" height="${cellWidth}" fill="#ec4899" rx="3" ry="3" filter="url(#cell-glow)"/>
-    <rect x="88" y="0" width="${cellWidth}" height="${cellWidth}" fill="#d946ef" rx="3" ry="3" filter="url(#cell-glow)"/>
-    <rect x="110" y="0" width="${cellWidth}" height="${cellWidth}" fill="#831843" rx="3" ry="3" filter="url(#cell-glow)"/>
-    <text x="134" y="11" fill="#831843" font-size="11" font-weight="600" font-family="sans-serif">More</text>
-  </g>`;
+    <linearGradient id="innerPink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff79ad"/>
+      <stop offset="0.5" stop-color="#ffd1df"/>
+      <stop offset="1" stop-color="#ff79ad"/>
+      <animate attributeName="x1" values="0;1;0" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="1;0;1" dur="7s" repeatCount="indefinite"/>
+    </linearGradient>
 
-  svg += `</svg>`;
-  return svg;
+    <linearGradient id="mountain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8a6bd"/>
+      <stop offset="1" stop-color="#ffdce8"/>
+    </linearGradient>
+
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd2df" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#fff8fb" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <radialGradient id="sun">
+      <stop offset="0" stop-color="#fff7fb" stop-opacity="1"/>
+      <stop offset="1" stop-color="#ffcfdf" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="pinkGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+
+    <filter id="cellGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <clipPath id="frameClip">
+      <rect x="16" y="26" width="${width - 32}" height="430" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <rect width="${width}" height="${height}" fill="#ffffff"/>
+
+  <rect x="16" y="26" width="${width - 32}" height="430" rx="28" fill="url(#bg)" stroke="#171016" stroke-width="7"/>
+
+  <rect x="23" y="33" width="${width - 46}" height="416" rx="22" fill="none" stroke="url(#innerPink)" stroke-width="5" filter="url(#pinkGlow)"/>
+
+  <g clip-path="url(#frameClip)">
+    <circle cx="245" cy="165" r="105" fill="url(#sun)"/>
+
+    <!-- soft distant mountain layers -->
+    <path d="M0 350 L120 275 L195 330 L285 235 L390 330 L500 255 L590 335 L705 250 L840 340 L965 265 L1110 345 L1230 265 L1370 340 L1510 260 L1600 335 L1600 456 L0 456 Z" fill="url(#mountain)" opacity="0.58"/>
+    <path d="M0 387 L120 330 L205 365 L305 300 L400 370 L520 318 L640 382 L760 310 L875 378 L1000 325 L1130 380 L1250 315 L1390 380 L1510 320 L1600 370 L1600 456 L0 456 Z" fill="#f5bfd0" opacity="0.6"/>
+
+    <!-- water reflection -->
+    <rect x="0" y="385" width="${width}" height="72" fill="url(#water)"/>
+    <path d="M70 402 Q250 392 430 405 T780 400 T1120 406 T1510 402" fill="none" stroke="#f59ab8" stroke-width="3" opacity="0.5"/>
+    <path d="M115 425 Q260 416 430 428 T780 423 T1100 430" fill="none" stroke="#ffc2d5" stroke-width="5" opacity="0.6"/>
+
+    <!-- Japanese pagoda -->
+    <g transform="translate(125 258)" fill="#471323" opacity="0.96">
+      <rect x="50" y="82" width="72" height="72" rx="2"/>
+      <rect x="61" y="112" width="15" height="42" fill="#f7c7d6"/>
+      <rect x="96" y="112" width="15" height="42" fill="#f7c7d6"/>
+      <polygon points="20,82 152,82 135,69 37,69"/>
+      <rect x="64" y="54" width="44" height="22"/>
+      <polygon points="31,54 145,54 126,42 49,42"/>
+      <rect x="76" y="29" width="20" height="18"/>
+      <polygon points="42,29 128,29 111,18 59,18"/>
+      <rect x="83" y="6" width="6" height="18"/>
+      <polygon points="80,7 93,7 86,0"/>
+    </g>
+
+    <!-- bridge -->
+    <path d="M40 399 Q145 343 255 395 Q340 431 435 392" fill="none" stroke="#4a1825" stroke-width="6"/>
+    <path d="M68 401 Q162 357 254 402" fill="none" stroke="#6a2538" stroke-width="3"/>
+
+    <!-- main sakura tree -->
+    <g fill="none" stroke="#25151a" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 450 C78 356 56 256 102 155 C125 106 145 75 178 42" stroke-width="34"/>
+      <path d="M98 154 C170 105 260 75 440 83" stroke-width="16"/>
+      <path d="M128 116 C210 60 300 48 470 48" stroke-width="10"/>
+      <path d="M105 205 C175 160 260 154 360 176" stroke-width="11"/>
+      <path d="M73 287 C155 248 245 275 350 315" stroke-width="13"/>
+      <path d="M155 246 C235 215 295 218 390 244" stroke-width="8"/>
+    </g>
+
+    <g opacity="0.98">
+      ${blossoms}
+    </g>
+
+    ${petals}
+
+    <!-- Graph panel -->
+    <rect x="382" y="66" width="1160" height="333" rx="20" fill="#fffafb" fill-opacity="0.56"/>
+    <g>
+      ${monthLabels}
+      <text x="367" y="178" text-anchor="end" fill="#401323" font-size="18" font-weight="700" font-family="Georgia, serif">Mon</text>
+      <text x="367" y="222" text-anchor="end" fill="#401323" font-size="18" font-weight="700" font-family="Georgia, serif">Wed</text>
+      <text x="367" y="266" text-anchor="end" fill="#401323" font-size="18" font-weight="700" font-family="Georgia, serif">Fri</text>
+      ${cells}
+    </g>
+
+    <!-- Legend -->
+    <g transform="translate(${legendX} 402)">
+      <text x="-18" y="18" text-anchor="end" fill="#401323" font-size="17" font-weight="700" font-family="Georgia, serif">Less</text>
+      <rect x="0" y="3" width="18" height="18" rx="4" fill="${palette[0]}"/>
+      <rect x="26" y="3" width="18" height="18" rx="4" fill="${palette[1]}"/>
+      <rect x="52" y="3" width="18" height="18" rx="4" fill="${palette[2]}"/>
+      <rect x="78" y="3" width="18" height="18" rx="4" fill="${palette[3]}"/>
+      <rect x="104" y="3" width="18" height="18" rx="4" fill="${palette[4]}"/>
+      <rect x="130" y="3" width="18" height="18" rx="4" fill="${palette[5]}"/>
+      <text x="165" y="18" fill="#401323" font-size="17" font-weight="700" font-family="Georgia, serif">More</text>
+    </g>
+
+    <!-- border shimmer -->
+    <rect x="23" y="33" width="${width - 46}" height="416" rx="22" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.6" stroke-dasharray="120 1800">
+      <animate attributeName="stroke-dashoffset" from="0" to="-1920" dur="8s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>`;
 }
