@@ -1,9 +1,13 @@
 # Contribution Universe
 
-An original contribution visualization for my GitHub profile.
+A live, Sakura-themed visualization of my GitHub contribution calendar.
 
 <p align="center">
-  <img src="contribution-universe-sakura.png" alt="SamSurve's Sakura Contribution Universe" width="100%" />
+  <img src="universe.svg" alt="SamSurve's Sakura Contribution Universe" width="100%" />
 </p>
 
-> The current profile version uses the finalized static Sakura artwork. The live contribution-data renderer remains in the repository for the next iteration.
+### Live data
+
+The SVG is generated from GitHub contribution data by GitHub Actions. The theme is separate from the contribution-data fetcher, so the visual theme can be changed without changing the data engine.
+
+Manual workflow runs can optionally render a specific calendar year; leaving the year empty uses the rolling GitHub contribution calendar.
