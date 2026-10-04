@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import { fetchContributions } from './fetcher.js';
-import { renderGalaxyTheme } from './themes/galaxy.js';
+import { renderSakuraTheme } from './themes/sakura.js';
 
 async function main() {
   const token = process.env.GITHUB_TOKEN;
@@ -12,8 +12,8 @@ async function main() {
   console.log(`Fetching contribution data for ${userName}...`);
   const calendarData = await fetchContributions(userName, token);
   
-  console.log("Generating galaxy theme SVG...");
-  const svgContent = renderGalaxyTheme(calendarData);
+  console.log("Generating sakura theme SVG...");
+  const svgContent = renderSakuraTheme(calendarData);
   
   await fs.writeFile("universe.svg", svgContent, "utf8");
   console.log("Successfully generated universe.svg!");
