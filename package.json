@@ -1,13 +1,10 @@
 {
   "name": "contribution-universe",
   "version": "1.0.0",
-  "description": "Live GitHub Contribution Universe",
-  "main": "api/index.js",
+  "description": "Original animated GitHub Contribution Universe for SamSurve",
+  "main": "src/index.js",
+  "type": "module",
   "scripts": {
-    "dev": "vercel dev"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "vercel": "^32.0.0"
+    "build": "node src/index.js"
   }
 }
