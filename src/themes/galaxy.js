@@ -32,13 +32,25 @@ export function renderGalaxyTheme(calendarData) {
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <defs>
-      <!-- Deep space background -->
+      <!-- Very dark black/navy background -->
       <linearGradient id="space-bg" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#02040a" />
-        <stop offset="50%" stop-color="#090f1d" />
-        <stop offset="100%" stop-color="#02040a" />
+        <stop offset="100%" stop-color="#060913" />
       </linearGradient>
       
+      <!-- Gradient for the elegant border -->
+      <linearGradient id="border-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#1d4ed8" />
+        <stop offset="50%" stop-color="#22d3ee" />
+        <stop offset="100%" stop-color="#c084fc" />
+      </linearGradient>
+
+      <!-- Glow for border -->
+      <filter id="border-glow" x="-10%" y="-10%" width="120%" height="120%">
+        <feGaussianBlur stdDeviation="3" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+
       <!-- Stronger tasteful glow for active cells -->
       <filter id="strong-glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="2.5" result="blur1" />
@@ -50,29 +62,39 @@ export function renderGalaxyTheme(calendarData) {
         </feMerge>
       </filter>
 
-      <!-- Massive blur for nebula effect -->
-      <filter id="nebula-blur" x="-100%" y="-100%" width="300%" height="300%">
-        <feGaussianBlur stdDeviation="15" result="blur" />
-      </filter>
+      <!-- Clip path to keep sweep inside border radius -->
+      <clipPath id="box-clip">
+        <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="10" />
+      </clipPath>
     </defs>
 
-    <!-- Background -->
-    <rect width="100%" height="100%" fill="url(#space-bg)" rx="10" />
+    <!-- Outer Glow for the Box -->
+    <rect x="1" y="1" width="${width - 2}" height="${height - 2}" fill="none" stroke="url(#border-gradient)" stroke-width="1.5" rx="10" filter="url(#border-glow)" opacity="0.4" />
     
-    <!-- Subtle background stars -->
-    <g opacity="0.4">
+    <!-- The Dark Box -->
+    <rect x="1" y="1" width="${width - 2}" height="${height - 2}" fill="url(#space-bg)" stroke="url(#border-gradient)" stroke-width="1.5" rx="10" />
+
+    <!-- Subtle moving light sweep along the top border -->
+    <g clip-path="url(#box-clip)">
+      <rect y="0" width="250" height="3" fill="#22d3ee" filter="url(#strong-glow)" opacity="0.8">
+        <animate attributeName="x" from="-300" to="${width + 100}" dur="6s" repeatCount="indefinite" />
+      </rect>
+    </g>
+    
+    <!-- Sparse, slowly twinkling background stars -->
+    <g opacity="0.3">
 `;
 
-  // Add subtle animated background stars
-  for (let i = 0; i < 80; i++) {
+  // Add sparse animated background stars
+  for (let i = 0; i < 30; i++) {
     const x = Math.random() * width;
     const y = Math.random() * height;
     const r = Math.random() * 1.5;
-    const duration = 4 + Math.random() * 6;
+    const duration = 6 + Math.random() * 6;
     const delay = Math.random() * 5;
     svg += `
       <circle cx="${x}" cy="${y}" r="${r}" fill="#ffffff">
-        <animate attributeName="opacity" values="0.1;0.6;0.1" dur="${duration}s" begin="${delay}s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.05;0.4;0.05" dur="${duration}s" begin="${delay}s" repeatCount="indefinite" />
       </circle>
     `;
   }
@@ -84,7 +106,6 @@ export function renderGalaxyTheme(calendarData) {
   `;
 
   let gridCells = '';
-  let nebulas = '';
 
   weeks.forEach((week, xIndex) => {
     const x = xIndex * cellTotal;
@@ -95,12 +116,6 @@ export function renderGalaxyTheme(calendarData) {
       const color = getColor(count);
       const isActivity = count > 0;
       const y = dateObj.getUTCDay() * cellTotal;
-      
-      // Dynamic Nebula generation ONLY behind highly active regions
-      if (count > maxCount * 0.3) {
-        const nebulaColor = count > maxCount * 0.6 ? '#c084fc' : '#3b82f6'; // purple or electric blue nebula
-        nebulas += `<circle cx="${x + cellWidth/2}" cy="${y + cellWidth/2}" r="${cellWidth * 2.5}" fill="${nebulaColor}" opacity="0.25" filter="url(#nebula-blur)" />`;
-      }
 
       // Animated pulse for highly active days
       let animatePulse = '';
@@ -113,8 +128,6 @@ export function renderGalaxyTheme(calendarData) {
     });
   });
 
-  // Render Nebulas BEHIND the grid cells
-  svg += nebulas;
   // Render the real grid cells
   svg += gridCells;
 
