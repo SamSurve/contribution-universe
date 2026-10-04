@@ -73,11 +73,11 @@ export function renderGalaxyTheme(calendarData) {
   `;
 
   // Weekday labels
-  const weekdays = ['Mon', 'Wed', 'Fri'];
-  const weekdayOffsets = [1, 3, 5]; 
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekdayOffsets = [0, 1, 2, 3, 4, 5, 6]; 
   weekdays.forEach((day, i) => {
     const y = weekdayOffsets[i] * cellTotal + 9;
-    svg += `<text x="-10" y="${y}" fill="#64748b" font-size="10" font-family="sans-serif" text-anchor="end">${day}</text>`;
+    svg += `<text x="-10" y="${y}" fill="#8b949e" font-size="10" font-family="sans-serif" text-anchor="end">${day}</text>`;
   });
 
   const monthLabels = [];
@@ -89,22 +89,26 @@ export function renderGalaxyTheme(calendarData) {
   weeks.forEach((week, xIndex) => {
     const x = xIndex * cellTotal;
     
-    week.contributionDays.forEach((day) => {
-      const dateObj = new Date(day.date);
-      const month = dateObj.getUTCMonth();
+    // Check the first day of the week to see if we entered a new month
+    if (week.contributionDays.length > 0) {
+      const firstDayDate = new Date(week.contributionDays[0].date);
+      const month = firstDayDate.getUTCMonth();
       
       if (month !== currentMonth) {
-        if (x - lastMonthX > 20) { // Prevent overlapping
+        if (x - lastMonthX > 20) { // Prevent overlapping text
           monthLabels.push({ text: monthNames[month], x });
           lastMonthX = x;
         }
         currentMonth = month;
       }
+    }
 
-      const y = dateObj.getUTCDay() * cellTotal; 
+    week.contributionDays.forEach((day) => {
+      const dateObj = new Date(day.date);
       const count = day.contributionCount;
       const color = getColor(count);
       const isActivity = count > 0;
+      const y = dateObj.getUTCDay() * cellTotal;
       
       // Animated pulse for highly active days
       let animatePulse = '';
