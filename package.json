@@ -1,0 +1,13 @@
+{
+  "name": "contribution-universe",
+  "version": "1.0.0",
+  "description": "Live GitHub Contribution Universe",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}
